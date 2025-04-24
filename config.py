@@ -19,7 +19,7 @@ class MLflowConfig:
 @dataclass
 class KServeConfig:
     model_format: str = "mlflow"
-    storage_uri: str = "s3://your-bucket/mlflow-models/iris-model"  # Update this with your S3 bucket
+    storage_uri: str = " "  # to be updated with my s3 url
     service_name: str = "iris-model"
 
 # Create configuration instances
