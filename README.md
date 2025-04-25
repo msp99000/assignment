@@ -1,15 +1,25 @@
 # Cancer Detection ML Pipeline
 
-A production-ready machine learning pipeline for cancer detection using PyTorch, MLflow, and KServe, with a Streamlit web interface.
+A production-ready machine learning pipeline for cancer detection using PyTorch, MLflow, and KServe, with a Streamlit web interface (incomplete).
 
 ## Features
 
 - PyTorch neural network for binary classification
 - MLflow integration for experiment tracking
 - Multiple synthetic datasets for robust training
-- Streamlit web interface for model inference
-- KServe deployment configuration
+- KServe deployment for model serving
+- Local development and testing setup
 - Comprehensive model evaluation
+
+## Prerequisites
+
+- Python 3.8+
+- Minikube
+- kubectl
+- Docker
+- MLflow
+- PyTorch
+- scikit-learn
 
 ## Project Structure
 
@@ -19,44 +29,71 @@ A production-ready machine learning pipeline for cancer detection using PyTorch,
 ├── model.py          # Model architecture
 ├── data.py           # Data preparation
 ├── train.py          # Training script
-├── app.py            # Streamlit web interface
 ├── kserve.yaml       # KServe deployment config
+├── start_mlflow.sh   # MLflow server startup script
+├── setup_local.sh    # Local environment setup script
+├── test_predictions.py # Prediction testing script
 └── requirements.txt  # Dependencies
 ```
 
-## Setup
+## Setup Instructions
 
-1. Install dependencies:
+### 1. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-2. Start MLflow server:
+### 2. Start MLflow Server
+
+In one terminal:
 
 ```bash
-mlflow server --host 0.0.0.0 --port 5000
+chmod +x start_mlflow.sh
+./start_mlflow.sh
 ```
 
-## Usage
+### 3. Train the Model
 
-1. Train the model:
+In another terminal:
 
 ```bash
 python train.py
 ```
 
-2. Run the Streamlit app:
+This will:
+
+- Generate synthetic cancer dataset
+- Train the model
+- Save the model to MLflow
+- Log metrics and parameters
+
+### 4. Set Up Local Environment with KServe
+
+In a new terminal:
 
 ```bash
-streamlit run app.py
+chmod +x setup_local.sh
+./setup_local.sh
 ```
 
-3. Deploy to KServe:
+This script will:
+
+- Start Minikube
+- Install KServe
+- Create necessary Kubernetes resources
+- Deploy the model
+- Set up port forwarding
+
+### 5. Test Predictions
+
+Once the setup is complete, you can test predictions:
 
 ```bash
-kubectl apply -f kserve.yaml
+python test_predictions.py
 ```
+
+This will make predictions on example data and display the results.
 
 ## Model Architecture
 
@@ -72,17 +109,37 @@ kubectl apply -f kserve.yaml
 - Saves best model based on test accuracy
 - Model registry for versioning
 
-## Streamlit Interface
+## KServe Deployment
 
-- Interactive feature input
-- Real-time predictions
-- Model information display
-- Feature importance visualization
+- Model served through KServe
+- Local development setup with Minikube
+- ConfigMap-based model storage
+- Port forwarding for local access
 
-## Production Considerations
+## Troubleshooting
 
-- Model validation
-- Data versioning
-- Monitoring
-- Scalability
-- Error handling
+1. If Minikube fails to start:
+
+   ```bash
+   minikube delete
+   minikube start --memory=4096 --cpus=2
+   ```
+
+2. If KServe deployment fails:
+
+   ```bash
+   kubectl delete -f kserve.yaml
+   kubectl apply -f kserve.yaml
+   ```
+
+3. If predictions fail:
+   - Check if MLflow server is running
+   - Verify KServe deployment status
+   - Check port forwarding
+
+## Future Enhancements
+
+- Streamlit web interface (incomplete)
+- Automated retraining pipeline
+- Model monitoring and drift detection
+- Production deployment guide
