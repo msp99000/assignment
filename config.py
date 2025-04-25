@@ -20,7 +20,7 @@ class ModelConfig:
 class MLflowConfig:
     experiment_name: str = "Cancer Detection Experiments"
     model_name: str = "cancer-classifier"
-    tracking_uri: str = "http://localhost:5001"
+    tracking_uri: str = "file:///Users/meuralnetwork/Projects/assignment/mlruns"
     artifact_root: str = "./mlruns"
 
 @dataclass
