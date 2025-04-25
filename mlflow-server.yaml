@@ -40,15 +40,27 @@ spec:
           image: mlflow/mlflow:latest
           ports:
             - containerPort: 5000
-          command: ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000"]
+          command:
+            [
+              "mlflow",
+              "server",
+              "--host",
+              "0.0.0.0",
+              "--port",
+              "5000",
+              "--backend-store-uri",
+              "sqlite:///mlflow.db",
+              "--default-artifact-root",
+              "./mlruns",
+            ]
           volumeMounts:
             - name: mlflow-models
-              mountPath: /mlflow-models
+              mountPath: ./mlruns
           env:
             - name: MLFLOW_TRACKING_URI
               value: "http://0.0.0.0:5000"
             - name: MLFLOW_ARTIFACT_ROOT
-              value: "/mlflow-models"
+              value: "./mlruns"
           resources:
             requests:
               cpu: "50m"

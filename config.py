@@ -20,8 +20,8 @@ class ModelConfig:
 class MLflowConfig:
     experiment_name: str = "Cancer Detection Experiments"
     model_name: str = "cancer-classifier"
-    tracking_uri: str = "http://mlflow-server:5000"
-    artifact_root: str = "/mlflow-models"
+    tracking_uri: str = "http://localhost:5000"
+    artifact_root: str = "./mlruns"
 
 @dataclass
 class StreamlitConfig:
@@ -38,9 +38,9 @@ class StreamlitConfig:
 @dataclass
 class KServeConfig:
     model_format: str = "mlflow"
-    storage_uri: str = "pvc://mlflow-models/cancer-classifier"
+    storage_uri: str = "file://./mlruns"
     service_name: str = "cancer-classifier"
-    mlflow_server: str = "http://mlflow-server:5000"
+    mlflow_server: str = "http://localhost:5000"
 
 # Create configuration instances
 model_config = ModelConfig()
