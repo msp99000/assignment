@@ -1,4 +1,4 @@
-# Technical Documentation: MLflow + KServe Iris Classification
+# Technical Documentation: MLflow + KServe Cancer Classification
 
 ## System Architecture
 
@@ -7,15 +7,20 @@
 ```python
 # data.py
 def prepare_data():
-    # Load and preprocess Iris dataset
-    iris = load_iris()
-    X = iris.data  # Features: sepal length, width, petal length, width
-    y = iris.target  # Classes: Setosa, Versicolor, Virginica
+    # Generate synthetic cancer dataset
+    X, y = make_classification(
+        n_samples=1000,
+        n_features=4,
+        n_informative=3,
+        n_redundant=0,
+        n_clusters_per_class=1,
+        class_sep=1.5
+    )
 ```
 
 **Key Components:**
 
-- Data loading and preprocessing
+- Data generation and preprocessing
 - Train-test split (80-20)
 - Feature scaling with StandardScaler
 - PyTorch DataLoader for efficient batching
@@ -24,16 +29,16 @@ def prepare_data():
 
 ```python
 # model.py
-class IrisNet(nn.Module):
+class CancerClassifier(nn.Module):
     def __init__(self):
-        self.fc1 = nn.Linear(4, 16)
-        self.bn1 = nn.BatchNorm1d(16)
+        self.fc1 = nn.Linear(4, 8)
+        self.bn1 = nn.BatchNorm1d(8)
         self.dropout = nn.Dropout(0.2)
 ```
 
 **Key Features:**
 
-- 4-16-3 neural network architecture
+- 4-8-1 neural network architecture
 - Batch normalization for stable training
 - Dropout for regularization
 - Xavier initialization
@@ -98,12 +103,12 @@ model.load_state_dict(checkpoint['model_state_dict'])
 # Save to MLflow
 mlflow.pytorch.log_model(
     model,
-    artifact_path="iris-model",
-    registered_model_name="iris-model"
+    artifact_path="cancer-classifier",
+    registered_model_name="cancer-classifier"
 )
 
 # Load from MLflow
-model = mlflow.pytorch.load_model("models:/iris-model/latest")
+model = mlflow.pytorch.load_model("models:/cancer-classifier/latest")
 ```
 
 ## Production Deployment
