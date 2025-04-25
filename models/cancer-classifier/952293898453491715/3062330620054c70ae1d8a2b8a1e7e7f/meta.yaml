@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/meuralnetwork/Projects/assignment/mlruns/952293898453491715/3062330620054c70ae1d8a2b8a1e7e7f/artifacts
+end_time: 1745549607245
+entry_point_name: ''
+experiment_id: '952293898453491715'
+lifecycle_stage: active
+run_id: 3062330620054c70ae1d8a2b8a1e7e7f
+run_name: Cancer Run 4
+run_uuid: 3062330620054c70ae1d8a2b8a1e7e7f
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1745549599331
+status: 3
+tags: []
+user_id: meuralnetwork

@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/meuralnetwork/Projects/assignment/mlruns/952293898453491715/dba1a34a72714f1e985e85a84b44b10b/artifacts
+end_time: 1745560649176
+entry_point_name: ''
+experiment_id: '952293898453491715'
+lifecycle_stage: active
+run_id: dba1a34a72714f1e985e85a84b44b10b
+run_name: thundering-ray-616
+run_uuid: dba1a34a72714f1e985e85a84b44b10b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1745560593190
+status: 3
+tags: []
+user_id: meuralnetwork

@@ -1,0 +1,14 @@
+aliases: []
+creation_timestamp: 1745560614472
+current_stage: None
+description: null
+last_updated_timestamp: 1745560614472
+name: cancer-classifier
+run_id: dba1a34a72714f1e985e85a84b44b10b
+run_link: null
+source: file:///Users/meuralnetwork/Projects/assignment/mlruns/952293898453491715/dba1a34a72714f1e985e85a84b44b10b/artifacts/cancer-classifier
+status: READY
+status_message: null
+storage_location: file:///Users/meuralnetwork/Projects/assignment/mlruns/952293898453491715/dba1a34a72714f1e985e85a84b44b10b/artifacts/cancer-classifier
+user_id: null
+version: 5
