@@ -1,13 +1,13 @@
 apiVersion: serving.kserve.io/v1beta1
 kind: InferenceService
 metadata:
-  name: iris-model
+  name: cancer-classifier
 spec:
   predictor:
     model:
       modelFormat:
         name: mlflow
-      storageUri: "s3://your-bucket/mlflow-models/iris-model" # Update this with your S3 bucket
+      storageUri: "pvc://mlflow-models/cancer-classifier" # Using PVC instead of S3
       resources:
         requests:
           cpu: "100m"
@@ -15,3 +15,8 @@ spec:
         limits:
           cpu: "1"
           memory: "1Gi"
+      env:
+        - name: MLFLOW_TRACKING_URI
+          value: "http://mlflow-server:5000"
+        - name: MODEL_NAME
+          value: "cancer-classifier"
