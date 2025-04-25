@@ -1,14 +1,15 @@
-# MLflow + KServe Iris Classification
+# Cancer Detection ML Pipeline
 
-A production-ready machine learning pipeline for Iris flower classification using PyTorch, MLflow, and KServe.
+A production-ready machine learning pipeline for cancer detection using PyTorch, MLflow, and KServe, with a Streamlit web interface.
 
 ## Features
 
-- PyTorch neural network with batch normalization and dropout
-- MLflow integration for experiment tracking and model registry
+- PyTorch neural network for binary classification
+- MLflow integration for experiment tracking
+- Multiple synthetic datasets for robust training
+- Streamlit web interface for model inference
 - KServe deployment configuration
 - Comprehensive model evaluation
-- Example inference script
 
 ## Project Structure
 
@@ -18,7 +19,7 @@ A production-ready machine learning pipeline for Iris flower classification usin
 ├── model.py          # Model architecture
 ├── data.py           # Data preparation
 ├── train.py          # Training script
-├── inference.py      # Inference example
+├── app.py            # Streamlit web interface
 ├── kserve.yaml       # KServe deployment config
 └── requirements.txt  # Dependencies
 ```
@@ -45,10 +46,10 @@ mlflow server --host 0.0.0.0 --port 5000
 python train.py
 ```
 
-2. Run inference:
+2. Run the Streamlit app:
 
 ```bash
-python inference.py
+streamlit run app.py
 ```
 
 3. Deploy to KServe:
@@ -59,23 +60,24 @@ kubectl apply -f kserve.yaml
 
 ## Model Architecture
 
-- Input layer: 4 features (sepal length, sepal width, petal length, petal width)
-- Hidden layer: 16 units with batch normalization and ReLU activation
+- Input layer: 4 features (tumor size, cell count, nuclei density, mitosis rate)
+- Hidden layer: 8 units with batch normalization and ReLU activation
 - Dropout: 0.2
-- Output layer: 3 classes (Setosa, Versicolor, Virginica)
+- Output layer: 1 unit with sigmoid activation
 
 ## MLflow Integration
 
-- Tracks training metrics (loss, accuracy)
+- Tracks training metrics (loss, accuracy, precision, recall, F1)
 - Logs model parameters
 - Saves best model based on test accuracy
 - Model registry for versioning
 
-## KServe Deployment
+## Streamlit Interface
 
-- MLflow model format
-- Resource limits configured
-- Scalable deployment
+- Interactive feature input
+- Real-time predictions
+- Model information display
+- Feature importance visualization
 
 ## Production Considerations
 

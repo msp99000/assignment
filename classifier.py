@@ -1,126 +1,90 @@
-
-# Project: PyTorch + MLflow + KServe Deployment Workflow
-# Goal: Simulate end-to-end architecture of training, logging with MLflow, and deploying via KServe.
-# Target: Data Analytics SaaS use-case with future scale and robustness in mind.
-
-# ----------------------
-# STEP 1: Train and Log a Simple Iris Flower Classifier using MLflow
-# ----------------------
+import pandas as pd
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+import mlflow
+import mlflow.pytorch
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from sklearn.datasets import load_iris
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-import mlflow.pytorch
-import numpy as np
+from torch.utils.data import TensorDataset, DataLoader
 
-# Load and preprocess Iris dataset
-iris = load_iris()
-X = iris.data
-y = iris.target
+# Set up MLflow tracking
+mlflow.set_experiment("Cancer Detection Experiments")
 
-scaler = StandardScaler()
-X = scaler.fit_transform(X)
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-X_train = torch.tensor(X_train, dtype=torch.float32)
-y_train = torch.tensor(y_train, dtype=torch.long)
-
-train_dataset = torch.utils.data.TensorDataset(X_train, y_train)
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=16, shuffle=True)
-
-# Define simple classification model
-class IrisNet(nn.Module):
-    def __init__(self):
-        super(IrisNet, self).__init__()
-        self.fc1 = nn.Linear(4, 16)
-        self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(16, 3)
+# Define a simple PyTorch classification model
+class CancerClassifier(nn.Module):
+    def __init__(self, input_size):
+        super(CancerClassifier, self).__init__()
+        self.fc = nn.Sequential(
+            nn.Linear(input_size, 8),
+            nn.ReLU(),
+            nn.Linear(8, 1),
+            nn.Sigmoid()
+        )
 
     def forward(self, x):
-        x = self.relu(self.fc1(x))
-        return self.fc2(x)
+        return self.fc(x)
 
-model = IrisNet()
-optimizer = optim.Adam(model.parameters(), lr=0.01)
-loss_fn = nn.CrossEntropyLoss()
+# Function to train and log an experiment
+def run_experiment(X, y, run_name, lr=0.001, epochs=50, batch_size=16):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Train and log with MLflow
-with mlflow.start_run():
-    for epoch in range(10):
-        total_loss = 0
-        for data, target in train_loader:
-            optimizer.zero_grad()
-            output = model(data)
-            loss = loss_fn(output, target)
-            loss.backward()
-            optimizer.step()
-            total_loss += loss.item()
-        mlflow.log_metric("loss", total_loss / len(train_loader), step=epoch)
+    # Convert to PyTorch tensors
+    train_dataset = TensorDataset(torch.tensor(X_train, dtype=torch.float32),
+                                   torch.tensor(y_train, dtype=torch.float32).unsqueeze(1))
+    test_tensor = torch.tensor(X_test, dtype=torch.float32)
+    test_labels = torch.tensor(y_test, dtype=torch.float32).unsqueeze(1)
 
-    # Log model
-    mlflow.pytorch.log_model(model, artifact_path="iris-model")
-    print("Iris model logged to MLflow!")
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
-# ----------------------
-# STEP 2: Model Artifact Explanation
-# ----------------------
-# MLflow logs the model in the structure below (this is what KServe needs):
-# mlruns/<experiment-id>/<run-id>/artifacts/iris-model
-# ├── MLmodel             <- Defines the model format and loader
-# ├── model.pth           <- Serialized PyTorch model
-# └── conda.yaml          <- Environment for deployment
+    model = CancerClassifier(input_size=X.shape[1])
+    criterion = nn.BCELoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
-# ----------------------
-# STEP 3: Create a KServe InferenceService YAML
-# ----------------------
-# Save the following YAML as `inferenceservice.yaml`
+    with mlflow.start_run(run_name=run_name):
+        mlflow.log_param("learning_rate", lr)
+        mlflow.log_param("epochs", epochs)
+        mlflow.log_param("batch_size", batch_size)
 
-# --- YAML START ---
-# apiVersion: serving.kserve.io/v1beta1
-# kind: InferenceService
-# metadata:
-#   name: iris-model
-# spec:
-#   predictor:
-#     model:
-#       modelFormat:
-#         name: mlflow
-#       storageUri: "s3://your-bucket/mlflow-models/iris-model"
-# --- YAML END ---
+        # Training loop
+        for epoch in range(epochs):
+            for inputs, labels in train_loader:
+                optimizer.zero_grad()
+                outputs = model(inputs)
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
 
-# ----------------------
-# STEP 4: System Architecture Diagram (text-based)
-# ----------------------
-#                     ┌────────────────────┐
-#                     │  SaaS Dashboard UI │
-#                     └─────────┬──────────┘
-#                               │ REST API call
-#                               ▼
-#                         ┌────────────┐
-#                         │  KServe    │ ◄─────┐
-#                         │ (MLflow)   │       │
-#                         └────┬───────┘       │
-#                              │               │
-#            InferenceRequest │               │ Model YAML
-#                              ▼               │
-#                      ┌──────────────┐        │
-#                      │ IrisNet Class│        │
-#                      │ via MLflow   │        │
-#                      └──────────────┘        │
-#                              ▲               │
-#           Model URI from S3 ─┘               │
-#                               ◄──────────────┘
-#                  Deployment managed by Kubernetes
+        # Evaluation
+        model.eval()
+        with torch.no_grad():
+            preds = model(test_tensor).round()
+            acc = accuracy_score(y_test, preds)
+            precision = precision_score(y_test, preds)
+            recall = recall_score(y_test, preds)
+            f1 = f1_score(y_test, preds)
 
-# ----------------------
-# STEP 5: Final Notes for Interviewer
-# ----------------------
-# - MLflow simplifies model logging, versioning, and rollback.
-# - KServe provides scalable, cloud-native model serving.
-# - Suggest adding drift monitoring, model A/B testing, and auto-retraining pipelines.
-# - Add GitOps (e.g., ArgoCD) for deploying model version YAMLs in a production ML pipeline.
+            mlflow.log_metric("accuracy", acc)
+            mlflow.log_metric("precision", precision)
+            mlflow.log_metric("recall", recall)
+            mlflow.log_metric("f1_score", f1)
 
-# End of solution.
+            mlflow.pytorch.log_model(model, "model")
+
+        print(f"{run_name} -> Acc: {acc:.2f}, Precision: {precision:.2f}, F1: {f1:.2f}")
+
+# --- Generate and Run 5 Datasets ---
+for i in range(5):
+    X, y = make_classification(
+        n_samples=1000,
+        n_features=4,
+        n_informative=3,
+        n_redundant=0,
+        n_clusters_per_class=1,
+        class_sep=1.5,
+        random_state=42 + i
+    )
+
+    # Replace column names with medical ones
+    df = pd.DataFrame(X, columns=["tumor_size", "cell_count", "nuclei_density", "mitosis_rate"]) #type: ignore
+    run_experiment(df.values, y, run_name=f"Cancer Run {i+1}")

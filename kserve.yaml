@@ -7,7 +7,7 @@ spec:
     model:
       modelFormat:
         name: mlflow
-      storageUri: " " # to be updated 
+      storageUri: "s3://your-bucket/mlflow-models/iris-model" # Update this with your S3 bucket
       resources:
         requests:
           cpu: "100m"
