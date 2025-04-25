@@ -20,27 +20,32 @@ class ModelConfig:
 class MLflowConfig:
     experiment_name: str = "Cancer Detection Experiments"
     model_name: str = "cancer-classifier"
-    tracking_uri: str = "http://localhost:5000"
+    tracking_uri: str = "http://localhost:5001"
     artifact_root: str = "./mlruns"
 
 @dataclass
 class StreamlitConfig:
-    title: str = "Cancer Detection Classifier"
-    description: str = "A machine learning model to predict cancer based on tumor characteristics"
-    feature_names: List[str] = field(default_factory=lambda: ["tumor_size", "cell_count", "nuclei_density", "mitosis_rate"])
+    title: str = "Cancer Risk Assessment"
+    description: str = "Enter patient features to assess cancer risk"
+    feature_names: List[str] = field(default_factory=lambda: [
+        "tumor_size",
+        "cell_count",
+        "nuclei_density",
+        "mitosis_rate"
+    ])
     feature_ranges: Dict[str, tuple] = field(default_factory=lambda: {
-        "tumor_size": (0.0, 10.0),
-        "cell_count": (0.0, 10.0),
-        "nuclei_density": (0.0, 10.0),
-        "mitosis_rate": (0.0, 10.0)
+        "tumor_size": (0.0, 1.0),
+        "cell_count": (0.0, 1.0),
+        "nuclei_density": (0.0, 1.0),
+        "mitosis_rate": (0.0, 1.0)
     })
 
 @dataclass
 class KServeConfig:
     model_format: str = "mlflow"
-    storage_uri: str = "file://./mlruns"
+    storage_uri: str = "pvc://cancer-model"
     service_name: str = "cancer-classifier"
-    mlflow_server: str = "http://localhost:5000"
+    mlflow_server: str = "http://localhost:5001"
 
 # Create configuration instances
 model_config = ModelConfig()
