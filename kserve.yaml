@@ -2,12 +2,14 @@ apiVersion: serving.kserve.io/v1beta1
 kind: InferenceService
 metadata:
   name: cancer-classifier
+  namespace: kserve
 spec:
   predictor:
     model:
       modelFormat:
         name: mlflow
-      storageUri: "file://./mlruns" # Local file storage
+      runtime: kserve-mlserver
+      storageUri: "pvc://cancer-model"
       resources:
         requests:
           cpu: "100m"
@@ -17,6 +19,10 @@ spec:
           memory: "1Gi"
       env:
         - name: MLFLOW_TRACKING_URI
-          value: "http://localhost:5000"
+          value: "http://localhost:5001"
         - name: MODEL_NAME
           value: "cancer-classifier"
+        - name: PROTOCOL
+          value: "v2"
+        - name: MODEL_URI
+          value: "pvc://cancer-model"
