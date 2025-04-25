@@ -1,36 +1,35 @@
 import streamlit as st
-import torch
+import requests
 import numpy as np
-from model import create_model
-from config import streamlit_config, model_config
-import mlflow
-from data import prepare_data
+import json
+from config import streamlit_config
 
-def load_model():
-    """Load the latest model from MLflow"""
-    mlflow.set_tracking_uri("http://localhost:5000")
-    model = mlflow.pytorch.load_model("models:/cancer-classifier/latest")
-    model.eval()
-    return model
-
-def predict(model, features):
-    """Make prediction using the model"""
-    with torch.no_grad():
-        features = torch.tensor(features, dtype=torch.float32)
-        prediction = model(features)
-        return prediction.numpy()[0]
+def make_prediction(features):
+    """Make prediction using KServe endpoint"""
+    url = "http://localhost:8080/v2/models/cancer-classifier/infer"
+    headers = {"Content-Type": "application/json"}
+    
+    # Format input according to V2 protocol
+    data = {
+        "inputs": [
+            {
+                "name": "input-0",
+                "shape": [1, 4],
+                "datatype": "FP32",
+                "data": features.tolist()
+            }
+        ]
+    }
+    
+    response = requests.post(url, headers=headers, data=json.dumps(data))
+    if response.status_code == 200:
+        return response.json()
+    else:
+        raise Exception(f"Prediction failed: {response.text}")
 
 def main():
     st.title(streamlit_config.title)
     st.write(streamlit_config.description)
-
-    # Load model
-    try:
-        model = load_model()
-        st.success("Model loaded successfully!")
-    except Exception as e:
-        st.error(f"Failed to load model: {e}")
-        return
 
     # Create input form
     st.header("Input Features")
@@ -49,38 +48,39 @@ def main():
 
     # Make prediction
     if st.button("Predict"):
-        # Prepare input
-        input_features = np.array([[features[f] for f in streamlit_config.feature_names]])
-        
-        # Make prediction
-        prediction = predict(model, input_features)
-        
-        # Display results
-        st.header("Prediction Results")
-        st.write(f"Probability of Cancer: {prediction:.2%}")
-        
-        # Add interpretation
-        if prediction > 0.5:
-            st.error("High probability of cancer detected")
-        else:
-            st.success("Low probability of cancer detected")
-
-    # Add model information
-    st.sidebar.header("Model Information")
-    st.sidebar.write("Model Architecture:")
-    st.sidebar.write(f"- Input Size: {model_config.input_size}")
-    st.sidebar.write(f"- Hidden Size: {model_config.hidden_size}")
-    st.sidebar.write(f"- Output Size: {model_config.output_size}")
-    
-    # Add feature importance visualization
-    st.sidebar.header("Feature Importance")
-    feature_importance = {
-        "tumor_size": 0.3,
-        "cell_count": 0.25,
-        "nuclei_density": 0.25,
-        "mitosis_rate": 0.2
-    }
-    st.sidebar.bar_chart(feature_importance)
+        try:
+            # Prepare input
+            input_features = np.array([[features[f] for f in streamlit_config.feature_names]])
+            
+            # Make prediction
+            result = make_prediction(input_features)
+            
+            # Extract probability from V2 response
+            probability = result['outputs'][0]['data'][0]
+            
+            # Display results
+            st.header("Prediction Results")
+            st.write(f"Cancer Probability: {probability:.2%}")
+            
+            # Add interpretation
+            if probability > 0.5:
+                st.error("High probability of cancer detected")
+            else:
+                st.success("Low probability of cancer detected")
+                
+            # Display feature importance
+            st.sidebar.header("Feature Importance")
+            feature_importance = {
+                "tumor_size": 0.3,
+                "cell_count": 0.25,
+                "nuclei_density": 0.25,
+                "mitosis_rate": 0.2
+            }
+            st.sidebar.bar_chart(feature_importance)
+            
+        except Exception as e:
+            st.error(f"Error making prediction: {str(e)}")
+            st.info("Make sure the KServe service is running and accessible at localhost:8080")
 
 if __name__ == "__main__":
     main()
