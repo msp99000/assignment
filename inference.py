@@ -3,7 +3,7 @@ import mlflow
 import numpy as np
 import os
 from sklearn.preprocessing import StandardScaler
-from config import mlflow_config
+from config import mlflow_config, streamlit_config
 from model import create_model
 
 def load_local_model(model_path, device='cpu'):
@@ -30,17 +30,16 @@ def predict(model, features):
     with torch.no_grad():
         model.eval()
         output = model(features)
-        probabilities = torch.softmax(output, dim=1)
-        predicted_class = torch.argmax(probabilities, dim=1)
+        probability = output.numpy()
     
-    return predicted_class.numpy(), probabilities.numpy()
+    return probability
 
 def main():
-    # Example features (sepal length, sepal width, petal length, petal width)
+    # Example features (tumor_size, cell_count, nuclei_density, mitosis_rate)
     example_features = np.array([
-        [5.1, 3.5, 1.4, 0.2],  # Setosa
-        [6.3, 2.9, 5.6, 1.8],  # Virginica
-        [5.9, 3.0, 4.2, 1.5]   # Versicolor
+        [5.1, 3.5, 1.4, 0.2],  # Low risk
+        [8.3, 7.9, 6.6, 5.8],  # High risk
+        [6.9, 5.0, 4.2, 3.5]   # Medium risk
     ])
     
     # Try loading from MLflow first, then fall back to local model
@@ -64,17 +63,20 @@ def main():
             raise FileNotFoundError("No local checkpoints found")
     
     # Make predictions
-    predictions, probabilities = predict(model, example_features)
+    probabilities = predict(model, example_features)
     
     # Print results
-    class_names = ['Setosa', 'Versicolor', 'Virginica']
-    print("\nPredictions:")
-    for i, (pred, probs) in enumerate(zip(predictions, probabilities)):
+    print("\nCancer Risk Predictions:")
+    for i, prob in enumerate(probabilities):
         print(f"\nSample {i+1}:")
-        print(f"Predicted class: {class_names[pred]}")
-        print("Class probabilities:")
-        for class_name, prob in zip(class_names, probs):
-            print(f"  {class_name}: {prob:.4f}")
+        print(f"Cancer Probability: {prob[0]:.2%}")
+        if prob[0] > 0.5:
+            print("Risk Level: High")
+        else:
+            print("Risk Level: Low")
+        print("Feature Values:")
+        for feature_name, value in zip(streamlit_config.feature_names, example_features[i]):
+            print(f"  {feature_name.replace('_', ' ').title()}: {value:.2f}")
 
 if __name__ == "__main__":
     main() 
